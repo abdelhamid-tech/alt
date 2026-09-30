@@ -1,0 +1,1530 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#0d0c0a">
+<title>AlteOs — Studio technologique indépendant</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%20131%20120'%3E%3Cpath%20fill='%233E8BFF'%20d='M66%200L131%20120L13%20120L46%2060L33%2060ZM33%2060L46%2060L13%20120L0%20120Z'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,200..800&family=Martian+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+/* ============ BASE ============ */
+:root{
+  --noir:#0d0c0a;
+  --noir2:#131210;
+  --ivoire:#f2ede1;
+  --ivoire-40:rgba(242,237,225,.4);
+  --ivoire-15:rgba(242,237,225,.15);
+  --ivoire-08:rgba(242,237,225,.08);
+  --accent:#3E8BFF;
+  --accent-rgb:62,139,255;
+  --duo:#8FBDFF;
+  --pad:clamp(20px,5vw,72px);
+  --disp:'Bricolage Grotesque',sans-serif;
+  --mono:'Martian Mono',monospace;
+  --expo:cubic-bezier(.16,1,.3,1);
+  --logo-pos:50% 50%;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:auto}
+html.lock{overflow:hidden}
+body{
+  background:var(--noir);
+  color:var(--ivoire);
+  font-family:var(--disp);
+  font-weight:340;
+  font-variation-settings:'opsz' 24;
+  overflow-x:hidden;
+  -webkit-font-smoothing:antialiased;
+}
+::selection{background:var(--accent);color:var(--noir)}
+::-webkit-scrollbar{width:4px}
+::-webkit-scrollbar-track{background:var(--noir)}
+::-webkit-scrollbar-thumb{background:var(--ivoire-40)}
+a{color:inherit;text-decoration:none}
+button{font-family:inherit;color:inherit;background:none;border:none;cursor:pointer}
+img{display:block;max-width:100%}
+:focus-visible{outline:1px solid var(--accent);outline-offset:4px}
+@media (hover:hover){
+  body, a, button, label, .stat-row{cursor:none}
+}
+.mono{font-family:var(--mono)}
+
+/* ============ LOGO ============ */
+.logo-crop{
+  position:relative;display:inline-block;vertical-align:bottom;line-height:0;
+}
+.brand-svg{display:block;width:var(--lw,240px);height:auto}
+.brand-svg .a-body{fill:currentColor}
+.brand-svg .a-sliver{fill:var(--accent);transition:fill .35s}
+.brand-img{
+  position:absolute;inset:0;width:100%;height:100%;
+  object-fit:cover;object-position:var(--logo-pos);
+  mix-blend-mode:screen;opacity:0;transition:opacity .5s;
+}
+html.has-logo .brand-img{opacity:1}
+html.has-logo .brand-svg{visibility:hidden}
+
+/* ============ GRAIN + PROGRESSION + CURSEUR + TRAÎNÉES ============ */
+#grain{
+  position:fixed;inset:-100%;z-index:60;pointer-events:none;opacity:.055;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='240'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2'/%3E%3C/filter%3E%3Crect width='240' height='240' filter='url(%23n)'/%3E%3C/svg%3E");
+  animation:grain 1.2s steps(6) infinite;
+}
+@keyframes grain{
+  0%{transform:translate(0,0)}20%{transform:translate(-4%,3%)}40%{transform:translate(3%,-5%)}
+  60%{transform:translate(-5%,-2%)}80%{transform:translate(4%,4%)}100%{transform:translate(0,0)}
+}
+#tracks{position:fixed;inset:0;z-index:55;pointer-events:none}
+#progress{
+  position:fixed;top:0;left:0;height:2px;width:100%;z-index:200;
+  background:var(--accent);transform-origin:left;transform:scaleX(0);
+}
+#cursor{position:fixed;top:0;left:0;z-index:1000;pointer-events:none;display:none}
+@media (hover:hover){#cursor{display:block}}
+.c-dot,.c-ring{position:fixed;top:0;left:0;border-radius:50%;transform:translate(-50%,-50%)}
+.c-dot{width:6px;height:6px;background:var(--accent)}
+.c-ring{
+  width:34px;height:34px;border:1px solid var(--ivoire-40);
+  transition:width .35s var(--expo),height .35s var(--expo),border-color .3s,background .3s;
+}
+#cursor.hov .c-ring{width:56px;height:56px;border-color:var(--accent)}
+#cursor.hov .c-dot{opacity:0}
+.c-label{
+  position:fixed;top:0;left:0;transform:translate(-50%,-50%);
+  font-family:var(--mono);font-size:8px;letter-spacing:.2em;color:var(--noir);
+  opacity:0;transition:opacity .25s;
+}
+#cursor.drag .c-ring{width:64px;height:64px;background:var(--accent);border-color:var(--accent)}
+#cursor.drag .c-label{opacity:1}
+#cursor.drag .c-dot{opacity:0}
+
+/* ============ MINI HUD ============ */
+#miniHud{
+  position:fixed;right:clamp(16px,3vw,40px);bottom:22px;z-index:450;
+  display:flex;align-items:center;gap:16px;
+  border:1px solid var(--ivoire-15);background:rgba(13,12,10,.78);
+  backdrop-filter:blur(12px);padding:12px 18px;
+  opacity:0;transform:translateY(16px);pointer-events:none;
+  transition:opacity .5s,transform .7s var(--expo),border-color .25s;
+}
+#miniHud.on{opacity:1;transform:none;pointer-events:auto}
+#miniHud.red{border-color:var(--accent);animation:redp .5s steps(2) infinite}
+@keyframes redp{50%{border-color:var(--ivoire-15)}}
+.mh-gear{
+  font-weight:680;font-variation-settings:'opsz' 96;font-size:30px;
+  width:52px;text-align:center;line-height:1;transition:color .15s,background .15s;
+  font-variant-numeric:tabular-nums;
+}
+.mh-gear.shift{color:var(--noir);background:var(--accent)}
+.mh-bars{width:clamp(70px,12vw,130px);height:4px;background:var(--ivoire-08);position:relative;overflow:hidden}
+#mhBar{position:absolute;inset:0;width:0%;background:var(--ivoire);transition:background .2s}
+#mhBar.hot{background:var(--accent)}
+.mh-speed{font-family:var(--mono);font-size:15px;font-variant-numeric:tabular-nums;line-height:1.1;text-align:right}
+.mh-speed small{display:block;font-size:7px;letter-spacing:.24em;color:var(--ivoire-40)}
+.mh-hint{font-family:var(--mono);font-size:8px;letter-spacing:.18em;color:var(--ivoire-40);border-left:1px solid var(--ivoire-08);padding-left:14px}
+.mh-gas{
+  display:none;font-family:var(--mono);font-size:9px;letter-spacing:.2em;
+  border:1px solid var(--accent);color:var(--accent);padding:12px 16px;touch-action:none;
+  user-select:none;-webkit-user-select:none;
+}
+.mh-gas:active{background:var(--accent);color:var(--noir)}
+@media (hover:none){
+  .mh-hint{display:none}
+  .mh-gas{display:inline-flex}
+}
+@media (max-width:560px){
+  #miniHud{gap:10px;padding:10px 12px;bottom:14px;right:14px}
+  .mh-gear{font-size:22px;width:40px}
+  .mh-speed{font-size:12px}
+}
+
+/* ============ PRELOADER ============ */
+#loader{
+  position:fixed;inset:0;z-index:900;background:var(--noir);
+  display:flex;align-items:center;justify-content:center;
+  transition:clip-path 1s var(--expo);
+  clip-path:inset(0 0 0 0);
+}
+#loader.done{clip-path:inset(0 0 100% 0)}
+.loader-word{display:block;overflow:hidden}
+.loader-word .logo-crop{
+  --lw:clamp(220px,42vw,575px);
+  transform:translateY(115%);animation:rise .9s var(--expo) .05s forwards;
+}
+@keyframes rise{to{transform:translateY(0)}}
+.loader-meta{
+  position:absolute;top:32px;left:var(--pad);
+  font-family:var(--mono);font-size:10px;letter-spacing:.25em;color:var(--ivoire-40);
+}
+.loader-build{
+  position:absolute;bottom:36px;left:var(--pad);
+  font-family:var(--mono);font-size:10px;letter-spacing:.25em;color:var(--ivoire-40);
+}
+.loader-count{
+  position:absolute;bottom:14px;right:var(--pad);
+  font-family:var(--mono);font-weight:300;font-size:clamp(70px,15vw,200px);
+  line-height:1;font-variant-numeric:tabular-nums;letter-spacing:-.04em;
+}
+.loader-count em{font-style:normal;font-size:.25em;color:var(--accent);letter-spacing:0}
+
+/* ============ HEADER ============ */
+#header{
+  position:fixed;top:0;left:0;right:0;z-index:500;
+  display:flex;align-items:center;justify-content:space-between;
+  padding:0 var(--pad);height:68px;
+  border-bottom:1px solid transparent;
+  transition:transform .5s var(--expo),background .4s,border-color .4s;
+}
+#header.sc{background:rgba(13,12,10,.72);backdrop-filter:blur(14px);border-color:var(--ivoire-08)}
+#header.hide{transform:translateY(-100%)}
+.logo{display:flex;align-items:center}
+.logo .logo-crop{--lw:96px}
+.nav-desktop{display:flex;gap:34px}
+.nav-desktop a{
+  font-family:var(--mono);font-size:10px;letter-spacing:.18em;position:relative;padding:6px 0;
+}
+.nav-desktop a i{font-style:normal;color:var(--accent);margin-right:6px;font-size:8px}
+.nav-desktop a::after{
+  content:'';position:absolute;left:0;bottom:0;height:1px;width:100%;
+  background:var(--accent);transform:scaleX(0);transform-origin:right;transition:transform .45s var(--expo);
+}
+.nav-desktop a:hover::after{transform:scaleX(1);transform-origin:left}
+.header-right{display:flex;align-items:center;gap:22px}
+.status{
+  display:flex;align-items:center;gap:9px;
+  font-family:var(--mono);font-size:9px;letter-spacing:.2em;color:var(--ivoire-40);
+  transition:color .3s;
+}
+.status .dot{width:6px;height:6px;border-radius:50%;background:var(--ivoire-40);transition:background .3s}
+.status.live{color:var(--ivoire)}
+.status.live .dot{background:var(--accent);animation:pulse 1.8s infinite}
+@keyframes pulse{
+  0%{box-shadow:0 0 0 0 rgba(var(--accent-rgb),.55)}
+  70%{box-shadow:0 0 0 9px rgba(var(--accent-rgb),0)}
+  100%{box-shadow:0 0 0 0 rgba(var(--accent-rgb),0)}
+}
+#menuBtn{
+  display:none;font-family:var(--mono);font-size:10px;letter-spacing:.22em;
+  border:1px solid var(--ivoire-15);padding:10px 16px;transition:background .3s,color .3s;
+}
+#menuBtn:hover{background:var(--ivoire);color:var(--noir)}
+
+/* ============ MENU OVERLAY ============ */
+#menu{
+  position:fixed;inset:0;z-index:600;background:var(--noir);
+  clip-path:inset(0 0 100% 0);transition:clip-path .7s var(--expo);
+  display:flex;flex-direction:column;justify-content:center;padding:0 var(--pad);
+}
+#menu.open{clip-path:inset(0 0 0% 0)}
+#menuClose{position:absolute;top:20px;right:var(--pad);padding:10px}
+#menuClose svg{width:26px;height:26px;stroke:var(--ivoire)}
+.mi{
+  display:flex;align-items:baseline;gap:18px;padding:14px 0;
+  border-bottom:1px solid var(--ivoire-08);
+  opacity:0;transform:translateY(30px);
+  transition:opacity .6s,transform .7s var(--expo);
+}
+#menu.open .mi{opacity:1;transform:translateY(0);transition-delay:calc(.15s + var(--i)*70ms)}
+.mi b{font-family:var(--mono);font-weight:400;font-size:11px;color:var(--accent)}
+.mi span{
+  font-size:clamp(38px,9vw,72px);font-weight:560;font-variation-settings:'opsz' 96;
+  letter-spacing:-.02em;transition:color .3s,transform .45s var(--expo);
+}
+.mi:hover span{color:var(--accent);transform:translateX(14px)}
+.menu-foot{
+  margin-top:40px;display:flex;justify-content:space-between;
+  font-family:var(--mono);font-size:10px;letter-spacing:.18em;color:var(--ivoire-40);
+}
+
+/* ============ HERO ============ */
+.hero{
+  min-height:100svh;display:flex;flex-direction:column;justify-content:space-between;
+  padding:92px var(--pad) 30px;position:relative;
+}
+.hero-meta{
+  font-family:var(--mono);font-size:10px;letter-spacing:.28em;color:var(--ivoire-40);
+}
+.hero-title{
+  text-align:center;user-select:none;margin:24px 0;
+  white-space:nowrap;will-change:transform;
+}
+.brand-wrap{display:inline-block;overflow:hidden;vertical-align:bottom}
+.hero-title .logo-crop{
+  --lw:clamp(300px,81vw,1310px);
+  transform:translateY(118%);
+  transition:transform 1.25s var(--expo) .1s;
+}
+.hero-title.in .brand-wrap .logo-crop{transform:translateY(0)}
+.hero-bottom{
+  display:flex;justify-content:space-between;align-items:flex-end;gap:40px;
+}
+.hero-desc{
+  max-width:42ch;font-size:clamp(15px,1.3vw,19px);line-height:1.55;color:var(--ivoire-40);
+}
+.hero-desc strong{color:var(--ivoire);font-weight:480}
+.hp-card{
+  flex-shrink:0;display:flex;flex-direction:column;gap:10px;
+  border:1px solid var(--ivoire-15);padding:22px 26px;min-width:320px;position:relative;
+  overflow:hidden;transition:border-color .35s;
+}
+.hp-card::before{
+  content:'';position:absolute;inset:0;background:var(--ivoire);
+  transform:scaleY(0);transform-origin:bottom;transition:transform .5s var(--expo);z-index:0;
+}
+.hp-card:hover::before{transform:scaleY(1)}
+.hp-card:hover{border-color:var(--ivoire)}
+.hp-card>*{position:relative;z-index:1}
+.hp-tag{display:flex;align-items:center;gap:8px;font-family:var(--mono);font-size:9px;letter-spacing:.22em;color:var(--accent)}
+.hp-tag .dot{width:6px;height:6px;border-radius:50%;background:var(--accent);animation:pulse 1.8s infinite}
+.hp-name{
+  display:flex;align-items:center;justify-content:space-between;gap:14px;
+  font-weight:620;font-variation-settings:'opsz' 96;
+  font-size:clamp(22px,2.6vw,32px);letter-spacing:-.02em;
+  transition:color .3s;
+}
+.hp-name svg{width:26px;height:26px;stroke:currentColor;flex-shrink:0;transition:transform .4s var(--expo)}
+.hp-card:hover .hp-name{color:var(--noir)}
+.hp-card:hover .hp-name svg{transform:translate(4px,-4px)}
+.hp-sub{font-family:var(--mono);font-size:9px;letter-spacing:.16em;color:var(--ivoire-40);transition:color .3s}
+.hp-card:hover .hp-sub{color:rgba(13,12,10,.6)}
+.scroll-hint{
+  position:absolute;bottom:34px;left:50%;transform:translateX(-50%);
+  display:flex;align-items:center;gap:12px;
+  font-family:var(--mono);font-size:9px;letter-spacing:.3em;color:var(--ivoire-40);
+}
+.sh-line{width:52px;height:1px;background:var(--ivoire-15);overflow:hidden;position:relative}
+.sh-line::after{
+  content:'';position:absolute;inset:0;background:var(--accent);
+  animation:shl 1.8s var(--expo) infinite;
+}
+@keyframes shl{0%{transform:translateX(-105%)}55%,100%{transform:translateX(105%)}}
+
+/* ============ MARQUEE ============ */
+.mq{
+  border-top:1px solid var(--ivoire-08);border-bottom:1px solid var(--ivoire-08);
+  padding:22px 0;overflow:hidden;
+}
+.mq-track{display:flex;align-items:center;gap:44px;width:max-content;will-change:transform}
+.mq-item{
+  font-weight:600;font-variation-settings:'opsz' 96;font-size:clamp(22px,3.4vw,44px);
+  letter-spacing:-.02em;white-space:nowrap;
+}
+.mq-item.hollow{
+  color:transparent;-webkit-text-stroke:1px var(--ivoire-40);
+}
+.mq-dot{width:9px;height:9px;background:var(--accent);border-radius:50%;flex-shrink:0}
+
+/* ============ SECTIONS COMMUNES ============ */
+.sec{padding:clamp(90px,13vw,170px) var(--pad)}
+.sec-label{
+  display:flex;align-items:center;gap:16px;margin-bottom:clamp(44px,6vw,80px);
+  font-family:var(--mono);font-size:10px;letter-spacing:.26em;color:var(--ivoire-40);
+}
+.sec-label b{color:var(--accent);font-weight:400}
+.sec-label::after{content:'';flex:1;height:1px;background:var(--ivoire-08)}
+[data-rvl]{opacity:0;transform:translateY(30px);transition:opacity .9s,transform 1.1s var(--expo);transition-delay:var(--d,0s)}
+[data-rvl].in{opacity:1;transform:translateY(0)}
+
+/* ============ MANIFESTO ============ */
+.scrub{
+  font-size:clamp(26px,4.4vw,62px);line-height:1.18;letter-spacing:-.02em;
+  font-weight:420;max-width:22ch;
+}
+.scrub .w{opacity:.13;transition:opacity .45s,color .45s}
+.scrub .w.on{opacity:1}
+.scrub .w.acc.on{color:var(--accent)}
+
+/* ============ STATS ============ */
+.stats{margin-top:clamp(70px,9vw,130px)}
+.stat-row{
+  display:grid;grid-template-columns:minmax(130px,240px) 1fr auto;align-items:center;gap:26px;
+  padding:26px 14px;border-top:1px solid var(--ivoire-08);position:relative;overflow:hidden;
+}
+.stat-row:last-child{border-bottom:1px solid var(--ivoire-08)}
+.stat-row::before{
+  content:'';position:absolute;inset:0;background:var(--accent);
+  transform:scaleY(0);transform-origin:bottom;transition:transform .45s var(--expo);
+}
+.stat-row:hover::before{transform:scaleY(1)}
+.stat-row>*{position:relative;z-index:1;transition:color .3s,transform .45s var(--expo)}
+.stat-num{
+  font-weight:640;font-variation-settings:'opsz' 96;font-size:clamp(40px,5.4vw,84px);
+  letter-spacing:-.03em;line-height:1;font-variant-numeric:tabular-nums;
+}
+.stat-label{font-size:clamp(14px,1.4vw,19px);color:var(--ivoire-40);line-height:1.4;max-width:44ch}
+.stat-meta{font-family:var(--mono);font-size:9px;letter-spacing:.22em;color:var(--ivoire-40);text-align:right}
+.stat-row:hover .stat-num,.stat-row:hover .stat-label,.stat-row:hover .stat-meta{color:var(--noir)}
+.stat-row:hover .stat-label{transform:translateX(10px)}
+
+/* ============ PROJET ============ */
+.proj-head{display:flex;justify-content:space-between;align-items:flex-end;gap:30px;margin-bottom:clamp(50px,6vw,90px)}
+.proj-title{
+  font-size:clamp(46px,9vw,150px);line-height:.95;letter-spacing:-.04em;
+  font-weight:680;font-variation-settings:'opsz' 96;
+}
+.proj-tag{
+  font-family:var(--mono);font-size:11px;letter-spacing:.14em;line-height:1.9;
+  color:var(--accent);text-align:right;flex-shrink:0;
+}
+.proj-body{display:grid;grid-template-columns:46% 1fr;gap:clamp(40px,6vw,90px);align-items:start}
+.canvas-wrap{
+  position:relative;aspect-ratio:1/1.08;border:1px solid var(--ivoire-08);
+  background:var(--noir2);
+}
+#artifact{position:absolute;inset:0;width:100%;height:100%;touch-action:none}
+.canvas-hud{
+  position:absolute;inset:0;pointer-events:none;
+  font-family:var(--mono);font-size:9px;letter-spacing:.18em;color:var(--ivoire-40);
+}
+.ch-tl{position:absolute;top:14px;left:16px}
+.ch-tr{position:absolute;top:14px;right:16px;text-align:right;line-height:1.9}
+.ch-bl{position:absolute;bottom:14px;left:16px}
+.ch-br{position:absolute;bottom:14px;right:16px;text-align:right;color:var(--accent)}
+.ch-br.dim{color:var(--ivoire-40)}
+.proj-lead{
+  font-size:clamp(18px,1.8vw,25px);line-height:1.5;letter-spacing:-.01em;font-weight:420;margin-bottom:26px;
+}
+.proj-p{font-size:15px;line-height:1.7;color:var(--ivoire-40);max-width:56ch;margin-bottom:40px}
+.rules{border-top:1px solid var(--ivoire-08);margin-bottom:44px}
+.rule{
+  display:flex;gap:22px;align-items:baseline;padding:16px 4px;
+  border-bottom:1px solid var(--ivoire-08);
+  transition:transform .4s var(--expo),background .3s;
+}
+.rule:hover{transform:translateX(12px);background:var(--ivoire-08)}
+.rule b{font-family:var(--mono);font-weight:400;font-size:10px;letter-spacing:.14em;color:var(--accent)}
+.rule span{font-size:15px}
+.btn-row{display:flex;gap:14px;flex-wrap:wrap}
+.btn{
+  display:inline-block;font-family:var(--mono);font-size:11px;letter-spacing:.16em;
+  padding:19px 32px;overflow:hidden;position:relative;
+}
+.btn .bl{display:block;overflow:hidden;height:1.4em}
+.btn .bl span{display:block;transition:transform .45s var(--expo)}
+.btn:hover .bl span{transform:translateY(-100%)}
+.btn-primary{background:var(--ivoire);color:var(--noir);transition:background .3s}
+.btn-primary:hover{background:var(--accent);color:var(--noir)}
+.btn-ghost{border:1px solid var(--ivoire-15);color:var(--ivoire);transition:border-color .3s,color .3s}
+.btn-ghost:hover{border-color:var(--ivoire);background:var(--ivoire);color:var(--noir)}
+
+/* captures */
+.caps-sec{padding:clamp(60px,8vw,120px) 0;overflow:hidden}
+.caps-sec .sec-label{padding:0 var(--pad)}
+.caps{display:flex;gap:clamp(20px,3vw,50px);width:max-content;padding:0 var(--pad);will-change:transform}
+.cap{flex-shrink:0}
+.cap-img{background:var(--duo);overflow:hidden}
+.cap-img img{
+  width:100%;height:100%;object-fit:cover;
+  filter:grayscale(1) contrast(1.08) brightness(.95);
+  mix-blend-mode:multiply;opacity:.94;
+  transform:scale(1.06);transition:filter .8s,transform .8s var(--expo);
+}
+.cap:hover .cap-img img{filter:grayscale(0) contrast(1.02);transform:scale(1.13)}
+.cap figcaption{
+  margin-top:12px;font-family:var(--mono);font-size:9px;letter-spacing:.2em;color:var(--ivoire-40);
+}
+.cap:nth-child(1){width:36vw;transform:translateY(-26px)}
+.cap:nth-child(2){width:27vw;transform:translateY(30px)}
+.cap:nth-child(3){width:33vw;transform:translateY(-8px)}
+.cap:nth-child(1) .cap-img{height:26vw}
+.cap:nth-child(2) .cap-img{height:34vw}
+.cap:nth-child(3) .cap-img{height:22vw}
+
+/* ============ DANS RBND (structure timeline) ============ */
+.tl{position:relative;padding:20px 0}
+.tl-line{position:absolute;left:50%;top:0;bottom:0;width:1px;background:var(--ivoire-08)}
+.tl-fill{width:100%;height:0%;background:var(--accent)}
+.tl-item{
+  display:grid;grid-template-columns:1fr 70px 1fr;align-items:start;
+  padding:clamp(26px,3.5vw,44px) 0;
+}
+.tl-node{
+  grid-column:2;justify-self:center;margin-top:8px;
+  width:11px;height:11px;border-radius:50%;border:1px solid var(--ivoire-40);background:var(--noir);
+  position:relative;z-index:1;
+}
+.tl-entry{opacity:0;transform:translateX(40px);transition:opacity .8s,transform 1s var(--expo)}
+.tl-item.side-l .tl-entry{grid-column:1;grid-row:1;text-align:right;justify-self:end;transform:translateX(-40px)}
+.tl-item.side-r .tl-entry{grid-column:3;grid-row:1;max-width:520px}
+.tl-item.in .tl-entry{opacity:1;transform:translateX(0)}
+.tl-top{display:flex;align-items:center;gap:14px;margin-bottom:12px}
+.side-l .tl-top{justify-content:flex-end}
+.tl-num{font-family:var(--mono);font-size:10px;letter-spacing:.2em;color:var(--ivoire-40)}
+.tl-state{font-family:var(--mono);font-size:8px;letter-spacing:.22em;padding:5px 10px;border:1px solid var(--ivoire-15);color:var(--ivoire-40)}
+.tl-entry h3{font-size:clamp(24px,2.6vw,38px);letter-spacing:-.02em;font-weight:560;margin-bottom:10px}
+.tl-entry p{font-size:14px;line-height:1.65;color:var(--ivoire-40);max-width:46ch}
+.side-l .tl-entry p{margin-left:auto}
+
+/* ============ CTA / CONTACT ============ */
+.cta{text-align:center;position:relative}
+.cta-title{
+  font-size:clamp(38px,7.6vw,120px);line-height:1;letter-spacing:-.035em;
+  font-weight:620;font-variation-settings:'opsz' 96;
+}
+.cta-title .hollow{color:transparent;-webkit-text-stroke:1.5px var(--ivoire);transition:color .5s,-webkit-text-stroke-color .5s}
+.cta-title:hover .hollow{color:var(--accent);-webkit-text-stroke-color:var(--accent)}
+.cta-copy{
+  max-width:56ch;margin:clamp(24px,3vw,40px) auto 0;
+  font-size:15px;line-height:1.7;color:var(--ivoire-40);
+}
+.cta-copy strong{color:var(--ivoire);font-weight:480}
+.cta-circle{position:relative;width:280px;height:280px;margin:clamp(30px,4vw,60px) auto 0}
+.cta-ring{position:absolute;inset:0;will-change:transform}
+.cta-ring text{font-family:var(--mono);font-size:10px;letter-spacing:3px;fill:var(--ivoire-40)}
+.cta-core{
+  position:absolute;inset:50px;border-radius:50%;border:1px solid var(--ivoire-15);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;
+  transition:background .45s var(--expo),border-color .3s,color .3s;
+}
+.cta-core svg{width:24px;height:24px;stroke:currentColor;transition:transform .4s var(--expo)}
+.cta-core:hover{background:var(--accent);border-color:var(--accent);color:var(--noir)}
+.cta-core:hover svg{transform:scale(1.12)}
+.cta-core span{font-family:var(--mono);font-size:10px;letter-spacing:.2em}
+.notice{
+  max-width:560px;margin:0 auto;border:1px solid var(--ivoire-15);border-left:2px solid var(--accent);
+  padding:16px 20px;font-family:var(--mono);font-size:10px;letter-spacing:.12em;line-height:1.8;
+  color:var(--ivoire-40);text-align:left;
+}
+.notice b{color:var(--accent);font-weight:400}
+.livery{margin-top:clamp(48px,6vw,80px)}
+.liv-label{font-family:var(--mono);font-size:9px;letter-spacing:.26em;color:var(--ivoire-40);margin-bottom:20px}
+.liv-row{display:flex;gap:16px;justify-content:center;flex-wrap:wrap}
+.sw{
+  width:38px;height:38px;border-radius:50%;background:var(--c);
+  border:1px solid rgba(242,237,225,.22);position:relative;
+  transition:transform .35s var(--expo),box-shadow .3s;
+}
+.sw:hover{transform:translateY(-5px) scale(1.1)}
+.sw.on{box-shadow:0 0 0 3px var(--noir),0 0 0 4.5px var(--ivoire)}
+.liv-hint{margin-top:18px;font-family:var(--mono);font-size:9px;letter-spacing:.14em;color:var(--ivoire-40)}
+
+/* ============ BANDE DAMIER ============ */
+.checker{
+  height:16px;margin:0 var(--pad);border:1px solid var(--ivoire-08);opacity:.14;
+  background:repeating-conic-gradient(var(--ivoire) 0% 25%, transparent 0% 50%);
+  background-size:16px 16px;
+}
+
+/* ============ FOOTER ============ */
+footer{border-top:1px solid var(--ivoire-08);padding:clamp(50px,7vw,90px) var(--pad) 0;overflow:hidden}
+.ft-top{display:grid;grid-template-columns:1.4fr 1fr 1fr 1fr;gap:40px}
+.ft-col h4{font-family:var(--mono);font-size:9px;letter-spacing:.24em;color:var(--ivoire-40);margin-bottom:20px;font-weight:400}
+.ft-brand p{font-size:14px;line-height:1.65;color:var(--ivoire-40);max-width:30ch}
+.ft-col a,.ft-col span.lk{
+  display:flex;align-items:center;gap:8px;font-family:var(--mono);font-size:11px;
+  letter-spacing:.14em;padding:7px 0;color:var(--ivoire-40);transition:color .3s,transform .35s var(--expo);
+}
+.ft-col a:hover,.ft-col span.lk:hover{color:var(--accent);transform:translateX(8px)}
+.ft-col a svg,.ft-col span.lk svg{width:11px;height:11px;stroke:currentColor;flex-shrink:0}
+#clock{font-variant-numeric:tabular-nums}
+.ft-mark{
+  margin-top:60px;text-align:center;user-select:none;will-change:transform;
+}
+.ft-mark .logo-crop{
+  --lw:clamp(420px,90vw,1560px);
+  opacity:.11;transition:opacity .6s;
+}
+.ft-mark:hover .logo-crop{opacity:.2}
+.ft-bot{
+  display:flex;justify-content:space-between;gap:20px;flex-wrap:wrap;
+  border-top:1px solid var(--ivoire-08);margin-top:56px;padding:22px 0;
+  font-family:var(--mono);font-size:9px;letter-spacing:.2em;color:var(--ivoire-40);
+}
+
+/* ============ TOASTS ============ */
+#toasts{position:fixed;bottom:24px;left:24px;z-index:800;display:flex;flex-direction:column;gap:10px}
+.toast{
+  font-family:var(--mono);font-size:11px;letter-spacing:.08em;line-height:1.5;
+  background:var(--noir2);border:1px solid var(--ivoire-15);border-left:2px solid var(--accent);
+  padding:15px 20px;max-width:340px;
+  opacity:0;transform:translateY(18px);transition:opacity .4s,transform .5s var(--expo);
+}
+.toast.on{opacity:1;transform:translateY(0)}
+
+/* ============ RESPONSIVE ============ */
+@media (max-width:960px){
+  .nav-desktop{display:none}
+  #menuBtn{display:block}
+  .status{display:none}
+  .hero-bottom{flex-direction:column;align-items:stretch}
+  .hp-card{min-width:0}
+  .scroll-hint{display:none}
+  .proj-head{flex-direction:column;align-items:flex-start}
+  .proj-tag{text-align:left}
+  .proj-body{grid-template-columns:1fr}
+  .canvas-wrap{max-width:560px;margin:0 auto;width:100%}
+  .cap:nth-child(1){width:70vw}.cap:nth-child(2){width:56vw}.cap:nth-child(3){width:64vw}
+  .cap:nth-child(1) .cap-img{height:52vw}.cap:nth-child(2) .cap-img{height:70vw}.cap:nth-child(3) .cap-img{height:44vw}
+  .tl-line{left:6px}
+  .tl-item{grid-template-columns:34px 1fr;padding:34px 0}
+  .tl-node{grid-column:1;margin-top:6px}
+  .tl-item.side-l .tl-entry,.tl-item.side-r .tl-entry{grid-column:2;text-align:left;justify-self:start;max-width:none;transform:translateX(40px)}
+  .side-l .tl-top{justify-content:flex-start}
+  .side-l .tl-entry p{margin-left:0}
+  .stat-row{grid-template-columns:90px 1fr;gap:16px}
+  .stat-meta{grid-column:2;text-align:left}
+  .ft-top{grid-template-columns:1fr 1fr}
+  .scrub{max-width:100%}
+}
+@media (max-width:520px){
+  .ft-top{grid-template-columns:1fr}
+}
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation-duration:.01ms!important;transition-duration:.01ms!important}
+}
+</style>
+</head>
+<body>
+
+<div id="grain"></div>
+<canvas id="tracks" aria-hidden="true"></canvas>
+<div id="progress"></div>
+<div id="cursor">
+  <div class="c-ring"></div>
+  <div class="c-dot"></div>
+  <div class="c-label">DRAG</div>
+</div>
+
+<!-- ============ MINI HUD ============ -->
+<div id="miniHud" data-hov>
+  <div class="mh-gear" id="mhGear">–</div>
+  <div class="mh-bars"><div id="mhBar"></div></div>
+  <div class="mh-speed"><span id="mhKmh">0.0</span><small>IMPACT M/S</small></div>
+  <span class="mh-hint">MAJ = REBONDS FORTS</span>
+  <button class="mh-gas" id="mhGas" aria-label="Rebonds plus forts">MAINT.</button>
+</div>
+
+<!-- ============ PRELOADER ============ -->
+<div id="loader">
+  <p class="loader-meta">ALTEOS — INITIALISATION DU STUDIO</p>
+  <div class="loader-word">
+    <span class="logo-crop">
+      <svg class="brand-svg" viewBox="0 0 662 120" aria-label="ALTEOS"><path class="a-body" d="M66 0 L131 120 L13 120 L46 60 L33 60 Z"/><path class="a-sliver" d="M33 60 L46 60 L13 120 L0 120 Z"/><path class="a-body" d="M147 0 H183 V84 H233 V120 H147 Z"/><path class="a-body" d="M249 0 H349 V36 H317 V120 H281 V36 H249 Z"/><path class="a-body" d="M365 0 H443 V36 H401 V42 H437 V78 H401 V84 H443 V120 H365 Z"/><path class="a-body" fill-rule="evenodd" d="M489 0 H531 L561 30 V90 L531 120 H489 L459 90 V30 Z M510 34 a26 26 0 1 0 .01 0 Z"/><path class="a-body" d="M577 0 H661 V36 H613 V42 H661 V120 H577 V84 H625 V78 H577 Z"/></svg>
+      <img class="brand-img" alt="ALTEOS">
+    </span>
+  </div>
+  <p class="loader-build">BUILD 0.7.1 — « LABO DE PHYSIQUE »</p>
+  <div class="loader-count"><span id="lcNum">000</span><em>%</em></div>
+</div>
+
+<!-- ============ HEADER ============ -->
+<header id="header">
+  <a class="logo" href="#top" aria-label="ALTEOS — retour en haut">
+    <span class="logo-crop">
+      <svg class="brand-svg" viewBox="0 0 662 120" aria-hidden="true"><path class="a-body" d="M66 0 L131 120 L13 120 L46 60 L33 60 Z"/><path class="a-sliver" d="M33 60 L46 60 L13 120 L0 120 Z"/><path class="a-body" d="M147 0 H183 V84 H233 V120 H147 Z"/><path class="a-body" d="M249 0 H349 V36 H317 V120 H281 V36 H249 Z"/><path class="a-body" d="M365 0 H443 V36 H401 V42 H437 V78 H401 V84 H443 V120 H365 Z"/><path class="a-body" fill-rule="evenodd" d="M489 0 H531 L561 30 V90 L531 120 H489 L459 90 V30 Z M510 34 a26 26 0 1 0 .01 0 Z"/><path class="a-body" d="M577 0 H661 V36 H613 V42 H661 V120 H577 V84 H625 V78 H577 Z"/></svg>
+      <img class="brand-img" alt="">
+    </span>
+  </a>
+  <nav class="nav-desktop">
+    <a href="#studio"><i>01</i>LE STUDIO</a>
+    <a href="#projet"><i>02</i>LE PROJET</a>
+    <a href="#journal"><i>03</i>DANS RBND</a>
+    <a href="#contact"><i>04</i>CONTACT</a>
+  </nav>
+  <div class="header-right">
+    <button class="status" id="statusBtn" aria-label="Activer le son">
+      <span class="dot"></span><span id="statusTxt">SON COUPÉ</span>
+    </button>
+    <button id="menuBtn" aria-label="Ouvrir le menu">MENU</button>
+  </div>
+</header>
+
+<!-- ============ MENU MOBILE ============ -->
+<div id="menu" aria-hidden="true">
+  <button id="menuClose" aria-label="Fermer le menu">
+    <svg viewBox="0 0 24 24" fill="none" stroke-width="1.5"><path d="M6 6l12 12M18 6L6 18"/></svg>
+  </button>
+  <a class="mi" style="--i:0" href="#studio"><b>01</b><span>Le studio</span></a>
+  <a class="mi" style="--i:1" href="#projet"><b>02</b><span>Le projet</span></a>
+  <a class="mi" style="--i:2" href="#journal"><b>03</b><span>Dans RBND</span></a>
+  <a class="mi" style="--i:3" href="#contact"><b>04</b><span>Contact</span></a>
+  <div class="menu-foot">
+    <span>BUILD 0.7.1</span>
+    <span>PARIS, FR</span>
+  </div>
+</div>
+
+<main id="top">
+
+  <!-- ============ HERO ============ -->
+  <section class="hero">
+    <p class="hero-meta">STUDIO TECHNOLOGIQUE INDÉPENDANT — PARIS — DEPUIS 2024</p>
+    <h1 class="hero-title" id="heroTitle" aria-label="ALTEOS">
+      <span class="brand-wrap">
+        <span class="logo-crop">
+          <svg class="brand-svg" viewBox="0 0 662 120" aria-hidden="true"><path class="a-body" d="M66 0 L131 120 L13 120 L46 60 L33 60 Z"/><path class="a-sliver" d="M33 60 L46 60 L13 120 L0 120 Z"/><path class="a-body" d="M147 0 H183 V84 H233 V120 H147 Z"/><path class="a-body" d="M249 0 H349 V36 H317 V120 H281 V36 H249 Z"/><path class="a-body" d="M365 0 H443 V36 H401 V42 H437 V78 H401 V84 H443 V120 H365 Z"/><path class="a-body" fill-rule="evenodd" d="M489 0 H531 L561 30 V90 L531 120 H489 L459 90 V30 Z M510 34 a26 26 0 1 0 .01 0 Z"/><path class="a-body" d="M577 0 H661 V36 H613 V42 H661 V120 H577 V84 H625 V78 H577 Z"/></svg>
+          <img class="brand-img" alt="">
+        </span>
+      </span>
+    </h1>
+    <div class="hero-bottom">
+      <p class="hero-desc" data-rvl style="--d:.5s">
+        AlteOs est un atelier compact, méthodique, orienté vers la précision.
+        Notre équipe travaille sur des cycles courts, mesurés, où chaque version est
+        <strong>testée, profilée et optimisée</strong> avant de publier. Nous privilégions
+        la cohérence, la stabilité et la lisibilité technique.
+      </p>
+      <a class="hp-card" href="#projet" data-rvl style="--d:.65s">
+        <span class="hp-tag"><span class="dot"></span>PROJET EN COURS</span>
+        <span class="hp-name">RBND
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="1.5"><path d="M7 17L17 7M7 7h10v10"/></svg>
+        </span>
+        <span class="hp-sub">BUILD 0.7.1 — 400 DÉFIS · 20 MONDES</span>
+      </a>
+    </div>
+    <div class="scroll-hint">LA TECHNIQUE D'ABORD<span class="sh-line"></span></div>
+  </section>
+
+  <!-- ============ MARQUEE ============ -->
+  <div class="mq" aria-hidden="true">
+    <div class="mq-track" id="mqTrack"></div>
+  </div>
+
+  <!-- ============ 01 STUDIO ============ -->
+  <section id="studio" class="sec">
+    <div class="sec-label"><b>01</b><span>LE STUDIO</span></div>
+    <p class="scrub" id="scrub"><em>AlteOs</em> est un studio technologique indépendant spécialisé dans la création de systèmes interactifs, moteurs internes et expériences numériques haute-performance. Notre approche repose sur une idée simple : <em>la technique d'abord</em>, <em>l'expérience ensuite</em>. Notre objectif est de proposer des produits qui <em>ne trichent pas</em> : ce que l'utilisateur voit est exactement ce que la machine calcule.</p>
+    <div class="stats" id="stats">
+      <div class="stat-row" data-hov>
+        <span class="stat-num" data-count="2024">0</span>
+        <span class="stat-label">année de fondation. AlteOs développe des outils, des prototypes et des environnements numériques capables de fonctionner vite, proprement et durablement.</span>
+        <span class="stat-meta">FONDATION</span>
+      </div>
+      <div class="stat-row" data-hov>
+        <span class="stat-num" data-count="400">0</span>
+        <span class="stat-label">défis répartis sur 20 mondes aux ambiances uniques — du Laboratoire au Big Bang.</span>
+        <span class="stat-meta">RBND</span>
+      </div>
+      <div class="stat-row" data-hov>
+        <span class="stat-num" data-count="20">0</span>
+        <span class="stat-label">mondes aux ambiances uniques. Chaque niveau teste votre précision.</span>
+        <span class="stat-meta">MONDES</span>
+      </div>
+      <div class="stat-row" data-hov>
+        <span class="stat-num" data-count="0">0</span>
+        <span class="stat-label">moyen de contact officiel pour l'instant — voir l'encadré de la section Contact.</span>
+        <span class="stat-meta">AVERTISSEMENT</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 02 PROJET ============ -->
+  <section id="projet" class="sec">
+    <div class="sec-label"><b>02</b><span>LE PROJET ACTUEL : RBND</span></div>
+    <div class="proj-head">
+      <h2 class="proj-title" data-rvl>RBND</h2>
+      <p class="proj-tag" data-rvl style="--d:.12s">« SIMPLE À PRENDRE EN MAIN,<br>DIFFICILE À MAÎTRISER. »</p>
+    </div>
+    <div class="proj-body">
+      <div class="canvas-wrap" id="canvasWrap" data-hov>
+        <canvas id="artifact" aria-label="Ballon filaire — glisser pour tourner"></canvas>
+        <div class="canvas-hud">
+          <span class="ch-tl">FIG. 01 — BALLON &amp; ARÈNE</span>
+          <span class="ch-tr">
+            <span id="hudRot">ROT X 000.0° — Y 000.0°</span><br>
+            <span id="hudSpeed">REBONDS 000</span>
+          </span>
+          <span class="ch-bl">ÉCH. 1:1 — RENDU FILAIRE</span>
+          <span class="ch-br">CIBLES DANS L'ARÈNE <span id="hudPatch">3</span></span>
+          <span class="ch-br dim" id="hudState">GLISSER POUR TOURNER</span>
+        </div>
+      </div>
+      <div class="proj-text">
+        <p class="proj-lead" data-rvl>RBND — Laboratoire de Physique est un jeu de réflexion et d'adresse où vous guidez un ballon à travers des arènes en 3D remplies d'obstacles, de rampes et de pièges.</p>
+        <p class="proj-p" data-rvl style="--d:.1s">Avec 400 défis répartis sur 20 mondes aux ambiances uniques — du Laboratoire au Big Bang — chaque niveau teste votre précision : collectez des cibles, enchaînez des rebonds ou tenez le plus longtemps possible sans toucher le sol. Chaque victoire rapporte de l'XP qui fait progresser votre niveau, tandis que les missions du jour et le bonus quotidien offrent des récompenses supplémentaires pour les joueurs fidèles. Dans le garage, échangez votre XP contre des ballons légendaires aux effets spectaculaires : métal doré, météore enflammé, néon pulsant ou arc-en-ciel infini.</p>
+        <div class="rules" data-rvl style="--d:.18s">
+          <div class="rule"><b>R-01</b><span>Collectez des cibles.</span></div>
+          <div class="rule"><b>R-02</b><span>Enchaînez des rebonds.</span></div>
+          <div class="rule"><b>R-03</b><span>Tenez le plus longtemps possible sans toucher le sol.</span></div>
+        </div>
+        <div class="btn-row" data-rvl style="--d:.26s">
+          <a class="btn btn-primary" href="#journal" data-mag>
+            <span class="bl"><span>DÉCOUVRIR RBND</span><span aria-hidden="true">DÉCOUVRIR RBND</span></span>
+          </a>
+          <a class="btn btn-ghost" href="#contact" data-mag>
+            <span class="bl"><span>CONTACT</span><span aria-hidden="true">CONTACT</span></span>
+          </a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ CAPTURES ============ -->
+  <div class="caps-sec" id="capsSec">
+    <div class="sec-label"><b>+</b><span>DANS RBND — ARÈNES &amp; MONDES</span></div>
+    <div class="caps-wrap" id="capsWrap">
+      <div class="caps" id="caps">
+        <figure class="cap">
+          <div class="cap-img"><img src="https://picsum.photos/seed/alteos-p1/900/1200.jpg" alt="Capture d'ambiance 1" loading="lazy"></div>
+          <figcaption>CAP. 001 — DU LABORATOIRE AU BIG BANG</figcaption>
+        </figure>
+        <figure class="cap">
+          <div class="cap-img"><img src="https://picsum.photos/seed/alteos-p7/800/1100.jpg" alt="Capture d'ambiance 2" loading="lazy"></div>
+          <figcaption>CAP. 002 — CIBLES À COLLECTER, REBONDS ENCHAÎNÉS</figcaption>
+        </figure>
+        <figure class="cap">
+          <div class="cap-img"><img src="https://picsum.photos/seed/alteos-p4/1000/800.jpg" alt="Capture d'ambiance 3" loading="lazy"></div>
+          <figcaption>CAP. 003 — ARÈNE OUVERTE — FORÊTS &amp; LACS</figcaption>
+        </figure>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ 03 DANS RBND ============ -->
+  <section id="journal" class="sec">
+    <div class="sec-label"><b>03</b><span>DANS RBND</span></div>
+    <div class="tl" id="tl">
+      <div class="tl-line"><div class="tl-fill" id="tlFill"></div></div>
+
+      <article class="tl-item side-l" data-rvl-tl>
+        <div class="tl-node"></div>
+        <div class="tl-entry">
+          <div class="tl-top"><span class="tl-num">F.01</span><span class="tl-state">ARÈNES</span></div>
+          <h3>Les arènes</h3>
+          <p>Un jeu de réflexion et d'adresse : vous guidez un ballon à travers des arènes en 3D remplies d'obstacles, de rampes et de pièges.</p>
+        </div>
+      </article>
+
+      <article class="tl-item side-r" data-rvl-tl>
+        <div class="tl-node"></div>
+        <div class="tl-entry">
+          <div class="tl-top"><span class="tl-num">F.02</span><span class="tl-state">20 MONDES</span></div>
+          <h3>400 défis</h3>
+          <p>Répartis sur des mondes aux ambiances uniques — du Laboratoire au Big Bang.</p>
+        </div>
+      </article>
+
+      <article class="tl-item side-l" data-rvl-tl>
+        <div class="tl-node"></div>
+        <div class="tl-entry">
+          <div class="tl-top"><span class="tl-num">F.03</span><span class="tl-state">PRÉCISION</span></div>
+          <h3>Chaque niveau teste votre précision</h3>
+          <p>Collectez des cibles, enchaînez des rebonds, ou tenez le plus longtemps possible sans toucher le sol.</p>
+        </div>
+      </article>
+
+      <article class="tl-item side-r" data-rvl-tl>
+        <div class="tl-node"></div>
+        <div class="tl-entry">
+          <div class="tl-top"><span class="tl-num">F.04</span><span class="tl-state">PROGRESSION</span></div>
+          <h3>XP &amp; garage</h3>
+          <p>Chaque victoire rapporte de l'XP ; les missions du jour et le bonus quotidien récompensent les joueurs fidèles. Au garage, l'XP s'échange contre des ballons légendaires : métal doré, météore enflammé, néon pulsant, arc-en-ciel infini.</p>
+        </div>
+      </article>
+
+      <article class="tl-item side-l" data-rvl-tl>
+        <div class="tl-node"></div>
+        <div class="tl-entry">
+          <div class="tl-top"><span class="tl-num">F.05</span><span class="tl-state">TEMPS RÉEL</span></div>
+          <h3>Multijoueur</h3>
+          <p>Une arène ouverte avec forêts et lacs, où vous pouvez discuter et défier d'autres joueurs en temps réel.</p>
+        </div>
+      </article>
+    </div>
+  </section>
+
+  <!-- ============ 04 CONTACT ============ -->
+  <section id="contact" class="sec cta">
+    <div class="sec-label"><b>04</b><span>CONTACT</span></div>
+    <h2 class="cta-title" data-rvl>OUVERT AUX COLLABORATIONS<br><span class="hollow">ET AUX ÉCHANGES PROFESSIONNELS</span></h2>
+    <p class="cta-copy" data-rvl style="--d:.1s">AlteOs reste un studio indépendant, ouvert aux <strong>collaborations techniques</strong>, aux <strong>retours d'expérience</strong> et aux <strong>échanges professionnels</strong>. Nous privilégions les discussions claires, les projets mesurables et les objectifs concrets.</p>
+    <div class="cta-circle" data-rvl style="--d:.15s" data-mag data-hov>
+      <svg class="cta-ring" id="ctaRing" viewBox="0 0 280 280">
+        <defs><path id="circ" d="M140 30 a110 110 0 1 1 -0.01 0"/></defs>
+        <text><textPath href="#circ" textLength="690">AUCUN CANAL OFFICIEL — RIEN À CLIQUER — AUCUN CANAL OFFICIEL —&#160;</textPath></text>
+      </svg>
+      <button class="cta-core" id="warnCore" aria-label="Aucun moyen de contact officiel">
+        <svg viewBox="0 0 24 24" fill="none" stroke-width="1.5"><circle cx="12" cy="12" r="8.5"/><path d="M6 6l12 12"/></svg>
+        <span>AUCUN CONTACT<br>OFFICIEL</span>
+      </button>
+    </div>
+    <div class="notice" data-rvl style="--d:.22s">
+      <b>AVERTISSEMENT —</b> AlteOs n'a actuellement aucun moyen de contact officiel : pas d'email, pas de formulaire, pas de réseau social officiel. Toute adresse ou tout profil se réclamant de nous ne l'est pas.
+    </div>
+    <div class="livery" data-rvl style="--d:.3s">
+      <p class="liv-label">COULEUR D'ACCENT — UN CLIC REPAINT TOUT LE SITE</p>
+      <div class="liv-row" id="livRow"></div>
+      <p class="liv-hint">LA BALLE, LES LUEURS, LES FILETS — TOUT SUIT.</p>
+    </div>
+  </section>
+</main>
+
+<div class="checker" id="checker" aria-hidden="true"></div>
+
+<!-- ============ FOOTER ============ -->
+<footer>
+  <div class="ft-top">
+    <div class="ft-col ft-brand">
+      <h4>ALTEOS®</h4>
+      <p>Studio technologique indépendant. Systèmes interactifs, moteurs internes et expériences numériques haute-performance — conçus pour fonctionner vite, proprement et durablement.</p>
+    </div>
+    <div class="ft-col">
+      <h4>PLAN</h4>
+      <a href="#studio">01 — LE STUDIO</a>
+      <a href="#projet">02 — LE PROJET</a>
+      <a href="#journal">03 — DANS RBND</a>
+      <a href="#contact">04 — CONTACT</a>
+    </div>
+    <div class="ft-col">
+      <h4>AILLEURS</h4>
+      <a href="#" data-social="discord">DISCORD <svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M7 17L17 7M7 7h10v10"/></svg></a>
+      <a href="#" data-social="github">GITHUB <svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M7 17L17 7M7 7h10v10"/></svg></a>
+      <a href="#" data-social="devlogs">DEVLOGS <svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M7 17L17 7M7 7h10v10"/></svg></a>
+    </div>
+    <div class="ft-col">
+      <h4>HEURE LOCALE</h4>
+      <span class="lk" id="clock">00:00:00</span>
+      <span class="lk" style="cursor:default">PARIS, FRANCE</span>
+      <span class="lk" style="cursor:default">BUILD 0.7.1 — LABO DE PHYSIQUE</span>
+    </div>
+  </div>
+  <div class="ft-mark" id="ftMark" aria-hidden="true">
+    <span class="logo-crop">
+      <svg class="brand-svg" viewBox="0 0 662 120"><path class="a-body" d="M66 0 L131 120 L13 120 L46 60 L33 60 Z"/><path class="a-sliver" d="M33 60 L46 60 L13 120 L0 120 Z"/><path class="a-body" d="M147 0 H183 V84 H233 V120 H147 Z"/><path class="a-body" d="M249 0 H349 V36 H317 V120 H281 V36 H249 Z"/><path class="a-body" d="M365 0 H443 V36 H401 V42 H437 V78 H401 V84 H443 V120 H365 Z"/><path class="a-body" fill-rule="evenodd" d="M489 0 H531 L561 30 V90 L531 120 H489 L459 90 V30 Z M510 34 a26 26 0 1 0 .01 0 Z"/><path class="a-body" d="M577 0 H661 V36 H613 V42 H661 V120 H577 V84 H625 V78 H577 Z"/></svg>
+      <img class="brand-img" alt="">
+    </span>
+  </div>
+  <div class="ft-bot">
+    <span>© 2025 ALTEOS — TOUS DROITS RÉSERVÉS</span>
+    <span>LA TECHNIQUE D'ABORD, L'EXPÉRIENCE ENSUITE</span>
+    <span>V.0.7.1</span>
+  </div>
+</footer>
+
+<div id="toasts"></div>
+
+<script src="https://unpkg.com/lenis@1.1.14/dist/lenis.min.js"></script>
+<script>
+/* ================= OUTILS ================= */
+const $  = (s, c=document) => c.querySelector(s);
+const $$ = (s, c=document) => [...c.querySelectorAll(s)];
+const lerp  = (a,b,t) => a + (b-a)*t;
+const clamp = (v,a,b) => Math.max(a, Math.min(b, v));
+const RM    = matchMedia('(prefers-reduced-motion: reduce)').matches;
+const TOUCH = matchMedia('(hover: none)').matches;
+const easeOutExpo = t => t === 1 ? 1 : 1 - Math.pow(2, -10*t);
+let ACC = '62,139,255'; /* couleur accent pilotée par la livrée */
+
+/* ================= LOGO =================
+   Le vectoriel ALTEOS intégré s'affiche par défaut.
+   Option : dépose ton fichier « alteos-logo.png » à côté du HTML,
+   il remplace automatiquement le SVG partout. */
+const LOGO_DATA = '';
+const LOGO_SRC  = 'alteos-logo.png';
+(function(){
+  const apply = src => {
+    $$('.brand-img').forEach(im => im.src = src);
+    document.documentElement.classList.add('has-logo');
+  };
+  if (LOGO_DATA){ apply(LOGO_DATA); return; }
+  const probe = new Image();
+  probe.onload  = () => apply(LOGO_SRC);
+  probe.onerror = () => {};
+  probe.src = LOGO_SRC;
+})();
+
+/* Scroll fluide (Lenis si dispo, sinon natif) */
+let lenis = null;
+if (window.Lenis && !RM && !TOUCH) {
+  lenis = new Lenis({ duration: 1.15, smoothWheel: true });
+}
+function lockScroll(on){
+  document.documentElement.classList.toggle('lock', on);
+  if (lenis) on ? lenis.stop() : lenis.start();
+}
+function goTo(sel){
+  const el = typeof sel === 'string' ? $(sel) : sel;
+  if (!el) return;
+  if (lenis) lenis.scrollTo(el, { offset: -70, duration: 1.5 });
+  else el.scrollIntoView({ behavior: 'smooth' });
+}
+ $$('a[href^="#"]').forEach(a => a.addEventListener('click', e => {
+  const href = a.getAttribute('href');
+  if (href.length > 1 && $(href)) { e.preventDefault(); closeMenu(); goTo(href); }
+}));
+
+/* Boucle rAF unique */
+const tasks = [];
+requestAnimationFrame(function loop(t){
+  requestAnimationFrame(loop);
+  if (lenis) lenis.raf(t);
+  for (const f of tasks) f(t);
+});
+
+let scrollVel = 0;
+const ball = { soundOn:false, throttle:false };
+const rbnd = { bounces:0, energy:.15, lastImpact:0 };
+
+/* ================= TOASTS ================= */
+const toastBox = $('#toasts');
+function toast(msg){
+  const t = document.createElement('div');
+  t.className = 'toast';
+  t.textContent = msg;
+  toastBox.appendChild(t);
+  requestAnimationFrame(() => t.classList.add('on'));
+  setTimeout(() => { t.classList.remove('on'); setTimeout(() => t.remove(), 500); }, 3600);
+}
+
+/* ================= CURSEUR ================= */
+const cursor = $('#cursor');
+let mx = innerWidth/2, my = innerHeight/2, cdx = mx, cdy = my, crx = mx, cry = my;
+if (!TOUCH) {
+  addEventListener('mousemove', e => { mx = e.clientX; my = e.clientY; });
+  document.addEventListener('mouseover', e => {
+    if (e.target.closest('#artifact')) cursor.className = 'drag';
+    else if (e.target.closest('a,button,[data-hov],label')) cursor.className = 'hov';
+    else cursor.className = '';
+  });
+  tasks.push(() => {
+    cdx = lerp(cdx, mx, .4);  cdy = lerp(cdy, my, .4);
+    crx = lerp(crx, mx, .16); cry = lerp(cry, my, .16);
+    cursor.children[1].style.transform = `translate(${cdx}px,${cdy}px) translate(-50%,-50%)`;
+    cursor.children[0].style.transform = `translate(${crx}px,${cry}px) translate(-50%,-50%)`;
+    cursor.children[2].style.transform = `translate(${crx}px,${cry}px) translate(-50%,-50%)`;
+  });
+}
+
+/* ================= PRELOADER ================= */
+const loader = $('#loader'), lcNum = $('#lcNum');
+let heroStarted = false;
+(function(){
+  lockScroll(true);
+  const D = RM ? 150 : 1700, t0 = performance.now();
+  function step(now){
+    const t = clamp((now - t0)/D, 0, 1);
+    lcNum.textContent = String(Math.round(easeOutExpo(t)*100)).padStart(3, '0');
+    if (t < 1) requestAnimationFrame(step);
+    else setTimeout(wipe, 380);
+  }
+  requestAnimationFrame(step);
+  setTimeout(() => { if (!heroStarted) wipe(); }, 5000);
+})();
+function wipe(){
+  if (heroStarted) return;
+  heroStarted = true;
+  loader.classList.add('done');
+  setTimeout(() => $('#heroTitle').classList.add('in'), 250);
+  setTimeout(() => { $$('.hero [data-rvl]').forEach(el => el.classList.add('in')); }, 550);
+  setTimeout(() => { loader.style.display = 'none'; lockScroll(false); }, 1100);
+}
+
+/* ================= HERO — TILT 3D DU LOGO ================= */
+const heroBrand = $('#heroTitle');
+if (!TOUCH && !RM) tasks.push(() => {
+  const r = heroBrand.getBoundingClientRect();
+  if (r.bottom < -80 || r.top > innerHeight + 80) return;
+  const dx = (mx - (r.left + r.width/2)) / innerWidth;
+  const dy = (my - (r.top + r.height/2)) / innerHeight;
+  heroBrand.style.transform =
+    `perspective(1100px) rotateY(${clamp(dx*8,-8,8)}deg) rotateX(${clamp(-dy*6,-6,6)}deg)`;
+});
+
+/* ================= MARQUEE + DAMIER + HEADER ================= */
+const mqTrack = $('#mqTrack');
+const mqUnit = `<span class="mq-item">RBND</span><span class="mq-dot"></span><span class="mq-item hollow">EN DÉVELOPPEMENT</span><span class="mq-dot"></span><span class="mq-item">BUILD 0.7.1</span><span class="mq-dot"></span><span class="mq-item hollow">ALTEOS</span><span class="mq-dot"></span>`;
+mqTrack.innerHTML = mqUnit.repeat(4);
+let mqOff = 0, mqUnitW = 1000, vel = 0, lastY = scrollY, mqSkew = 0;
+let checkerOff = 0;
+const checkerEl = $('#checker');
+function measureMQ(){ mqUnitW = mqTrack.scrollWidth / 4 || 1000; }
+if (document.fonts && document.fonts.ready) document.fonts.ready.then(measureMQ);
+measureMQ();
+addEventListener('resize', measureMQ);
+tasks.push(() => {
+  const y = scrollY;
+  vel = lerp(vel, y - lastY, .1);
+  lastY = y;
+  scrollVel = vel;
+  if (!RM){
+    mqOff -= 0.7 + Math.abs(vel) * 0.45;
+    if (mqOff <= -mqUnitW) mqOff += mqUnitW;
+    mqSkew = lerp(mqSkew, clamp(vel * 0.35, -12, 12), .12);
+    mqTrack.style.transform = `translateX(${mqOff}px) skewX(${mqSkew}deg)`;
+    checkerOff = (checkerOff - vel * 0.35) % 32;
+    checkerEl.style.backgroundPosition = `${checkerOff}px 0`;
+  }
+  const max = document.documentElement.scrollHeight - innerHeight;
+  $('#progress').style.transform = `scaleX(${max > 0 ? y/max : 0})`;
+  const h = $('#header');
+  h.classList.toggle('sc', y > 60);
+  if (!menuOpen){
+    if (vel > 1.5 && y > 500) h.classList.add('hide');
+    else if (vel < -1.5) h.classList.remove('hide');
+  }
+});
+
+/* ================= REVEALS ================= */
+const io = new IntersectionObserver(es => es.forEach(e => {
+  if (e.isIntersecting){ e.target.classList.add('in'); io.unobserve(e.target); }
+}), { threshold: .18 });
+ $$('[data-rvl],[data-rvl-tl]').forEach(el => io.observe(el));
+
+/* ================= MANIFESTO SCRUB ================= */
+const scrub = $('#scrub');
+(function(){
+  const nodes = [...scrub.childNodes];
+  scrub.innerHTML = '';
+  nodes.forEach(n => {
+    const acc = n.nodeType === 1;
+    n.textContent.split(/(\s+)/).forEach(part => {
+      if (!part) return;
+      if (/^\s+$/.test(part)) scrub.appendChild(document.createTextNode(' '));
+      else {
+        const s = document.createElement('span');
+        s.className = 'w' + (acc ? ' acc' : '');
+        s.textContent = part;
+        scrub.appendChild(s);
+      }
+    });
+  });
+})();
+const words = $$('.w', scrub);
+tasks.push(() => {
+  const r = scrub.getBoundingClientRect();
+  if (r.bottom < -100 || r.top > innerHeight + 100) return;
+  const p = clamp((innerHeight * .85 - r.top) / (r.height + innerHeight * .4), 0, 1);
+  const k = p * words.length;
+  for (let i = 0; i < words.length; i++) words[i].classList.toggle('on', i < k);
+});
+
+/* ================= COMPTEURS STATS ================= */
+const ioStats = new IntersectionObserver(es => es.forEach(e => {
+  if (!e.isIntersecting) return;
+  ioStats.unobserve(e.target);
+  $$('.stat-num[data-count]', e.target).forEach(el => {
+    const end = +el.dataset.count, t0 = performance.now();
+    (function tick(now){
+      const t = clamp((now - t0)/1400, 0, 1);
+      el.textContent = Math.round(easeOutExpo(t) * end);
+      if (t < 1) requestAnimationFrame(tick);
+    })(t0);
+  });
+}), { threshold: .3 });
+ioStats.observe($('#stats'));
+
+/* ================= ARTEFACT 3D — BALLON & ARÈNE RBND ================= */
+(function(){
+  const cv = $('#artifact'), ctx = cv.getContext('2d');
+  const wrap = $('#canvasWrap');
+  let W, H, cx, cy, S, pf, inView = true;
+  function resize(){
+    const r = wrap.getBoundingClientRect();
+    const dpr = Math.min(devicePixelRatio || 1, 2);
+    W = r.width; H = r.height;
+    cv.width = W * dpr; cv.height = H * dpr;
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    cx = W/2; cy = H/2 - H*0.02;
+    S = Math.min(W, H) * 0.30;
+    pf = 5.2 * S;
+  }
+  resize(); addEventListener('resize', resize);
+  new IntersectionObserver(es => inView = es[0].isIntersecting).observe(wrap);
+
+  const TAU = Math.PI*2;
+  const GY = -1.12, R = 0.5, GRAV = 3.4;
+
+  let rx=-0.30, ry=-0.55, vx=0, vy=0, dragging=false, lx=0, ly=0;
+  let frame=0, lastT=0, yB=GY+R+1.0, vyB=0, spinX=0;
+  let c1=1,s1=0,c2=1,s2=0;
+
+  function PJ(x,y,z,out){
+    x*=S; y*=S; z*=S;
+    const x1 = x*c1 + z*s1, z1 = -x*s1 + z*c1;
+    const y1 = y*c2 - z1*s2, z2 = y*s2 + z1*c2;
+    const k = pf/(pf - z2);
+    out[0]=cx + x1*k; out[1]=cy + y1*k; out[2]=z2/S; out[3]=k;
+    return out;
+  }
+  const p=[0,0,0,0], q=[0,0,0,0];
+  function seg(A,B,base){
+    const zz=(A[2]+B[2])/2;
+    ctx.strokeStyle = `rgba(242,237,225,${clamp(base+zz*.16,.04,.85)})`;
+    ctx.beginPath(); ctx.moveTo(A[0],A[1]); ctx.lineTo(B[0],B[1]); ctx.stroke();
+  }
+  function circle3(r,y,segN,accent,alpha,dash){
+    ctx.lineWidth = 1;
+    if (dash) ctx.setLineDash([3,6]);
+    ctx.strokeStyle = accent ? `rgba(${ACC},${clamp(alpha,.1,1)})` : `rgba(242,237,225,${clamp(alpha,.05,.8)})`;
+    ctx.beginPath();
+    for (let i=0;i<=segN;i++){
+      const a=i/segN*TAU;
+      PJ(r*Math.cos(a), y, r*Math.sin(a), q);
+      i ? ctx.lineTo(q[0],q[1]) : ctx.moveTo(q[0],q[1]);
+    }
+    ctx.stroke();
+    if (dash) ctx.setLineDash([]);
+  }
+  function drawBox(bx,bz,w,h,d,base){
+    const x0=bx-w/2,x1=bx+w/2,z0=bz-d/2,z1=bz+d/2,y0=GY,y1=GY+h;
+    const C=[[x0,y0,z0],[x1,y0,z0],[x1,y0,z1],[x0,y0,z1],[x0,y1,z0],[x1,y1,z0],[x1,y1,z1],[x0,y1,z1]];
+    const E=[[0,1],[1,2],[2,3],[3,0],[4,5],[5,6],[6,7],[7,4],[0,4],[1,5],[2,6],[3,7]];
+    ctx.lineWidth = 1;
+    for (const [a,b] of E){ PJ(...C[a],p); PJ(...C[b],q); seg(p,q,base); }
+  }
+  function drawRamp(x0,x1,z0,z1,h,base){
+    const P=[[x0,GY,z0],[x1,GY,z0],[x1,GY+h,z0],[x0,GY,z1],[x1,GY,z1],[x1,GY+h,z1]];
+    const E=[[0,1],[1,2],[3,4],[4,5],[0,3],[1,4],[2,5]];
+    ctx.lineWidth = 1;
+    for (const [a,b] of E){ PJ(...P[a],p); PJ(...P[b],q); seg(p,q,base); }
+  }
+
+  /* sphère filaire (rayon unité) */
+  const lats=[], longs=[];
+  for (let k=1;k<=6;k++){
+    const phi=k/7*Math.PI, pts=[];
+    for (let i=0;i<24;i++){ const a=i/24*TAU;
+      pts.push([Math.sin(phi)*Math.cos(a), Math.cos(phi), Math.sin(phi)*Math.sin(a)]); }
+    lats.push(pts);
+  }
+  for (let k=0;k<8;k++){
+    const th=k/8*Math.PI, pts=[];
+    for (let i=0;i<24;i++){ const t=i/24*TAU;
+      pts.push([Math.sin(t)*Math.cos(th), Math.cos(t), Math.sin(t)*Math.sin(th)]); }
+    longs.push(pts);
+  }
+
+  const targets=[[0.95,GY+0.02,1.05],[1.3,GY+1.05,-0.8],[-1.35,GY+1.4,0.55]];
+
+  cv.addEventListener('pointerdown', e => {
+    dragging = true; lx = e.clientX; ly = e.clientY;
+    cv.setPointerCapture(e.pointerId);
+    $('#hudState').textContent = 'ORBITE MANUELLE';
+  });
+  cv.addEventListener('pointermove', e => {
+    if (!dragging) return;
+    const dx = e.clientX - lx, dy = e.clientY - ly;
+    ry += dx*.006; rx += dy*.006;
+    vy = dx*.006;  vx = dy*.006;
+    lx = e.clientX; ly = e.clientY;
+  });
+  const stop = () => { dragging = false; $('#hudState').textContent = 'GLISSER POUR TOURNER'; };
+  cv.addEventListener('pointerup', stop);
+  cv.addEventListener('pointercancel', stop);
+
+  tasks.push(t => {
+    if (!inView) return;
+    const dt = lastT ? Math.min((t - lastT)/1000, .05) : .016;
+    lastT = t;
+    frame++;
+
+    /* physique : gravité, rebond, énergie pilotée par le scroll + MAJ */
+    const thr = ball.throttle ? 1 : 0;
+    const eT  = .15 + thr*.55 + Math.min(Math.abs(scrollVel),50)/50*.45;
+    rbnd.energy = lerp(rbnd.energy, eT, .06);
+    vyB -= GRAV*dt; yB += vyB*dt;
+    if (yB - R < GY){
+      yB = GY + R;
+      rbnd.lastImpact = Math.abs(vyB);
+      vyB = 1.2 + rbnd.energy * 2.4;
+      rbnd.bounces++;
+      onBounce(rbnd.lastImpact);
+    }
+    spinX += (.5 + rbnd.energy*1.8)*dt;
+
+    if (!dragging){
+      ry += 0.0016 + vy; rx += vx;
+      vx *= 0.94; vy *= 0.94;
+      rx = clamp(rx, -1.15, 0.85);
+    }
+
+    ctx.clearRect(0, 0, W, H);
+    c1=Math.cos(ry); s1=Math.sin(ry); c2=Math.cos(rx); s2=Math.sin(rx);
+
+    /* grille au sol */
+    ctx.lineWidth = 1;
+    for (let g=-2.2; g<=2.21; g+=.55){
+      PJ(g,GY,-2.2,p);  PJ(g,GY,2.2,q);  seg(p,q,.10);
+      PJ(-2.2,GY,g,p);  PJ(2.2,GY,g,q);  seg(p,q,.10);
+    }
+
+    /* anneau de cible sous le ballon */
+    const pulse = .35 + .22*Math.sin(t*.004);
+    circle3(.80, GY, 40, true, pulse, false);
+    circle3(.98, GY, 40, true, pulse*.5, true);
+
+    /* ombre + lueur au contact */
+    const h  = yB - (GY+R);
+    const hn = clamp(h/2.2, 0, 1);
+    circle3(R*(1.12-.45*hn), GY, 28, false, .38-.22*hn, false);
+    const sF = clamp(1 - h/.22, 0, 1);
+    if (sF > .02) circle3(R*1.12, GY, 28, true, .55*sF, false);
+
+    /* obstacles & rampe */
+    drawBox(-1.55,-.45,.7,.9,.7,.22);
+    drawBox(1.70, .55,.6,.55,.6,.22);
+    drawRamp(-2.0,-1.25,-1.55,-.95,.7,.22);
+
+    /* cibles flottantes */
+    ctx.lineWidth = 1;
+    targets.forEach((tg,i)=>{
+      PJ(tg[0],tg[1],tg[2],q);
+      const rr = .11*S*q[3];
+      ctx.strokeStyle = `rgba(${ACC},${clamp(.45+.3*Math.sin(t*.003+i*2.1),.2,.85)})`;
+      ctx.beginPath(); ctx.arc(q[0],q[1],rr,0,TAU); ctx.stroke();
+      ctx.fillStyle = `rgba(${ACC},.8)`;
+      ctx.beginPath(); ctx.arc(q[0],q[1],rr*.3,0,TAU); ctx.fill();
+    });
+
+    /* le ballon : spin + squash & stretch */
+    const stretch = sF < .15 ? clamp(Math.abs(vyB)*.10-.30, 0, .45) : 0;
+    const sy  = (1 - .30*sF) * (1 + stretch);
+    const sxz = 1 + (1 - sy)*.75;
+    const csx=Math.cos(spinX), snx=Math.sin(spinX);
+    const strokeRing = pts => {
+      ctx.beginPath();
+      for (let i=0;i<=pts.length;i++){
+        const pt = pts[i%pts.length];
+        const y1 = pt[1]*csx - pt[2]*snx;
+        const z1 = pt[1]*snx + pt[2]*csx;
+        PJ(pt[0]*sxz, yB + y1*sy, z1*sxz, q);
+        i ? ctx.lineTo(q[0],q[1]) : ctx.moveTo(q[0],q[1]);
+      }
+      ctx.stroke();
+    };
+    ctx.lineWidth = 1;
+    ctx.strokeStyle = 'rgba(242,237,225,.5)';
+    lats.forEach(strokeRing);
+    longs.forEach(strokeRing);
+    ctx.strokeStyle = `rgba(${ACC},.55)`; /* l'équateur porte la livrée */
+    strokeRing(lats[2]);
+
+    /* croisillons de coin */
+    const m4=18;
+    ctx.strokeStyle='rgba(242,237,225,.3)';
+    [[m4,m4],[W-m4,m4],[m4,H-m4],[W-m4,H-m4]].forEach(([x,y]) => {
+      ctx.beginPath();
+      ctx.moveTo(x-5,y); ctx.lineTo(x+5,y);
+      ctx.moveTo(x,y-5); ctx.lineTo(x,y+5);
+      ctx.stroke();
+    });
+
+    /* HUD */
+    if (frame % 8 === 0){
+      const dg = a => ((a*57.2958)%360+360)%360;
+      $('#hudRot').textContent = `ROT X ${dg(rx).toFixed(1)}° — Y ${dg(ry).toFixed(1)}°`;
+      $('#hudSpeed').textContent = `REBONDS ${String(rbnd.bounces%1000).padStart(3,'0')}`;
+    }
+  });
+})();
+
+/* ================= MINI HUD + RETOUR DE REBOND ================= */
+const mhGear = $('#mhGear'), mhBar = $('#mhBar'), mhKmh = $('#mhKmh'), miniHud = $('#miniHud');
+let shiftTO = null;
+function onBounce(impact){
+  mhGear.classList.add('shift');
+  clearTimeout(shiftTO);
+  shiftTO = setTimeout(() => mhGear.classList.remove('shift'), 180);
+  blip(impact);
+}
+tasks.push(() => {
+  const on = ball.soundOn;
+  mhBar.style.width = (rbnd.energy*100).toFixed(1) + '%';
+  mhBar.classList.toggle('hot', rbnd.energy > .8);
+  mhGear.textContent = on ? String(rbnd.bounces%1000).padStart(3,'0') : '–';
+  mhKmh.textContent = rbnd.lastImpact.toFixed(1);
+  miniHud.classList.toggle('red', on && rbnd.energy > .85);
+});
+
+/* ================= SON — BLIPS DE REBOND SYNTHÉTISÉS ================= */
+let AC = null, master = null;
+function buildAudio(){
+  AC = new (window.AudioContext || window.webkitAudioContext)();
+  master = AC.createGain(); master.gain.value = 0; master.connect(AC.destination);
+}
+function blip(impact){
+  if (!AC || !ball.soundOn) return;
+  const t = AC.currentTime;
+  const osc = AC.createOscillator(), g = AC.createGain();
+  osc.type = 'sine';
+  const f = 150 + clamp(impact, 0, 6) * 55;
+  osc.frequency.setValueAtTime(f, t);
+  osc.frequency.exponentialRampToValueAtTime(Math.max(f*.5, 40), t+.12);
+  g.gain.setValueAtTime(.0001, t);
+  g.gain.exponentialRampToValueAtTime(.18, t+.008);
+  g.gain.exponentialRampToValueAtTime(.0001, t+.15);
+  osc.connect(g); g.connect(master);
+  osc.start(t); osc.stop(t+.18);
+}
+function toggleSound(){
+  ball.soundOn = !ball.soundOn;
+  if (ball.soundOn){
+    if (!AC) buildAudio(); else AC.resume();
+    master.gain.setTargetAtTime(1, AC.currentTime, .05);
+  } else if (AC){
+    master.gain.setTargetAtTime(0, AC.currentTime, .05);
+  }
+  $('#statusBtn').classList.toggle('live', ball.soundOn);
+  $('#statusTxt').textContent = ball.soundOn ? 'SON ACTIVÉ' : 'SON COUPÉ';
+  miniHud.classList.toggle('on', ball.soundOn);
+  toast(ball.soundOn ? 'Son activé — chaque rebond joue une note.' : 'Son coupé.');
+}
+ $('#statusBtn').addEventListener('click', toggleSound);
+addEventListener('keydown', e => {
+  if (e.key === 'Shift' && !e.repeat) ball.throttle = true;
+  if (e.key === 'Escape') closeMenu();
+});
+addEventListener('keyup', e => { if (e.key === 'Shift') ball.throttle = false; });
+const mhGas = $('#mhGas');
+mhGas.addEventListener('pointerdown', e => { e.preventDefault(); ball.throttle = true; });
+['pointerup','pointercancel','pointerleave'].forEach(ev =>
+  mhGas.addEventListener(ev, () => ball.throttle = false));
+
+/* ================= TRAÎNÉES DE BALLON (CURSEUR) ================= */
+(function(){
+  const cv = $('#tracks'), ctx = cv.getContext('2d');
+  function rs(){ cv.width = innerWidth; cv.height = innerHeight; }
+  rs(); addEventListener('resize', rs);
+  const pts = [];
+  let px = null, py = null;
+  addEventListener('pointermove', e => {
+    if (px !== null){
+      const d = Math.hypot(e.clientX - px, e.clientY - py);
+      if (d > 2){
+        pts.push({ x: e.clientX, y: e.clientY, px, py, life: 1, w: clamp(d * .14, .5, 3.4) });
+        if (pts.length > 500) pts.shift();
+      }
+    }
+    px = e.clientX; py = e.clientY;
+  });
+  tasks.push(() => {
+    ctx.clearRect(0, 0, cv.width, cv.height);
+    for (let i = pts.length - 1; i >= 0; i--){
+      const s = pts[i];
+      s.life -= .017;
+      if (s.life <= 0){ pts.splice(i, 1); continue; }
+      const a = Math.min(s.w / 3.4, 1) * s.life;
+      ctx.lineWidth = s.w;
+      ctx.strokeStyle = `rgba(242,237,225,${a * .22})`;
+      ctx.beginPath(); ctx.moveTo(s.px, s.py); ctx.lineTo(s.x, s.y); ctx.stroke();
+      if (s.w > 2){
+        ctx.lineWidth = s.w * .4;
+        ctx.strokeStyle = `rgba(${ACC},${a * .5})`;
+        ctx.beginPath(); ctx.moveTo(s.px, s.py); ctx.lineTo(s.x, s.y); ctx.stroke();
+      }
+    }
+  });
+})();
+
+/* ================= LIVRÉE — REPAINT GLOBAL (BLEU PAR DÉFAUT) ================= */
+const LIVERIES = [
+  { id:'AZUR',   c:'#3E8BFF', rgb:'62,139,255',  duo:'#8FBDFF' },
+  { id:'CIEL',   c:'#6FC0FF', rgb:'111,192,255', duo:'#B9E0FF' },
+  { id:'MENTHE', c:'#21C98B', rgb:'33,201,139',  duo:'#8FE8C6' },
+  { id:'SOLEIL', c:'#FFC700', rgb:'255,199,0',   duo:'#FFE58A' },
+  { id:'ROUGE',  c:'#FF2E44', rgb:'255,46,68',   duo:'#FF9AA6' },
+  { id:'IVOIRE', c:'#F2EDE1', rgb:'242,237,225', duo:'#F2EDE1' },
+];
+const livRow = $('#livRow');
+LIVERIES.forEach((l, i) => {
+  const b = document.createElement('button');
+  b.className = 'sw';
+  b.style.setProperty('--c', l.c);
+  b.dataset.i = i;
+  b.setAttribute('aria-label', 'Livrée ' + l.id);
+  b.addEventListener('click', () => setAccent(i));
+  livRow.appendChild(b);
+});
+function setAccent(i, silent){
+  const l = LIVERIES[i];
+  ACC = l.rgb;
+  const root = document.documentElement.style;
+  root.setProperty('--accent', l.c);
+  root.setProperty('--accent-rgb', l.rgb);
+  root.setProperty('--duo', l.duo);
+  $$('.sw', livRow).forEach(s => s.classList.toggle('on', +s.dataset.i === i));
+  if (!silent) toast(`Livrée ${l.id} appliquée — tout le site est repeint.`);
+}
+setAccent(0, true);
+
+/* ================= PARALLAXE HORIZONTALE DES CAPTURES ================= */
+tasks.push(() => {
+  const wrap = $('#capsWrap'), caps = $('#caps');
+  const maxX = caps.scrollWidth - wrap.clientWidth;
+  if (maxX <= 0) return;
+  const r = wrap.getBoundingClientRect();
+  if (r.bottom < 0 || r.top > innerHeight) return;
+  const p = clamp((innerHeight - r.top) / (innerHeight + r.height), 0, 1);
+  caps.style.transform = `translateX(${-maxX * p}px)`;
+});
+
+/* ================= LIGNE QUI SE DESSINE ================= */
+tasks.push(() => {
+  const tl = $('#tl'), fill = $('#tlFill');
+  const r = tl.getBoundingClientRect();
+  const p = clamp((innerHeight * .75 - r.top) / r.height, 0, 1);
+  fill.style.height = (p * 100) + '%';
+});
+
+/* ================= BOUTONS MAGNÉTIQUES ================= */
+if (!TOUCH && !RM) $$('[data-mag]').forEach(el => {
+  let tx = 0, ty = 0, x = 0, y = 0;
+  el.addEventListener('mousemove', e => {
+    const r = el.getBoundingClientRect();
+    tx = (e.clientX - r.left - r.width/2) * .28;
+    ty = (e.clientY - r.top - r.height/2) * .28;
+  });
+  el.addEventListener('mouseleave', () => { tx = 0; ty = 0; });
+  tasks.push(() => {
+    x = lerp(x, tx, .18); y = lerp(y, ty, .18);
+    el.style.transform = `translate(${x}px,${y}px)`;
+  });
+});
+
+/* ================= ANNEAU CTA ================= */
+(function(){
+  const ring = $('#ctaRing'), core = $('.cta-circle');
+  let a = 0, sp = 0.12, target = 0.12;
+  core.addEventListener('mouseenter', () => target = 0.9);
+  core.addEventListener('mouseleave', () => target = 0.12);
+  tasks.push(() => {
+    sp = lerp(sp, target, .06);
+    a = (a + sp) % 360;
+    ring.style.transform = `rotate(${a}deg)`;
+  });
+})();
+
+/* ================= AVERTISSEMENT SANS CONTACT ================= */
+ $('#warnCore').addEventListener('click', () => {
+  toast('AlteOs n\u2019a aucun moyen de contact officiel pour l\u2019instant — rien à cliquer. Tout ce qui se réclame de nous ne l\u2019est pas.');
+});
+
+/* ================= PARALLAXE DU WORDMARK ================= */
+tasks.push(() => {
+  const mark = $('#ftMark');
+  const r = mark.getBoundingClientRect();
+  if (r.top > innerHeight || r.bottom < 0) return;
+  const p = clamp((innerHeight - r.top) / (innerHeight + r.height), 0, 1);
+  mark.style.transform = `translateY(${(p - 1) * 16}%)`;
+});
+
+/* ================= MENU MOBILE ================= */
+const menu = $('#menu');
+let menuOpen = false;
+function openMenu(){ menuOpen = true; menu.classList.add('open'); lockScroll(true); }
+function closeMenu(){ if (!menuOpen) return; menuOpen = false; menu.classList.remove('open'); lockScroll(false); }
+ $('#menuBtn').addEventListener('click', openMenu);
+ $('#menuClose').addEventListener('click', closeMenu);
+
+/* ================= LIENS SOCIAUX ================= */
+ $$('[data-social]').forEach(a => a.addEventListener('click', e => {
+  e.preventDefault();
+  const m = { discord: 'Pas de canal officiel pour l\u2019instant — il ouvrira ici d\u2019abord.',
+              github:  'Le dépôt ouvrira avec la démo publique.',
+              devlogs: 'Les devlogs arrivent — dans RBND d\u2019abord.' };
+  toast(m[a.dataset.social]);
+}));
+
+/* ================= HORLOGE LOCALE ================= */
+(function(){
+  const el = $('#clock');
+  const fmt = new Intl.DateTimeFormat('fr-FR', { hour:'2-digit', minute:'2-digit', second:'2-digit', timeZone:'Europe/Paris' });
+  const tick = () => el.textContent = fmt.format(new Date());
+  tick(); setInterval(tick, 1000);
+})();
+</script>
+</body>
+</html>
